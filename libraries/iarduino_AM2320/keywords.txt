@@ -1,0 +1,22 @@
+#	####################################################
+#	СИНТАКСИЧЕСКАЯ РАСКРАСКА ДЛЯ БИБИЛИОТЕКИ:
+#	iarduino_AM2320
+#	####################################################
+#	ТИПЫ ДАННЫХ:							   (KEYWORD1)
+	iarduino_AM2320	KEYWORD1
+#	####################################################
+#	МЕТОДЫ И ФУНКЦИИ:						   (KEYWORD2)
+	begin	KEYWORD2
+	read	KEYWORD2
+	tem	KEYWORD2
+	hum	KEYWORD2
+#	####################################################
+#	КОНСТАНТЫ:								   (LITERAL1)
+	AM2320_OK	LITERAL1
+	AM2320_ERROR_LEN	LITERAL1
+	AM2320_ERROR_ADDR	LITERAL1
+	AM2320_ERROR_DATA	LITERAL1
+	AM2320_ERROR_SEND	LITERAL1
+	AM2320_ERROR_READ	LITERAL1
+	AM2320_ERROR_ANS	LITERAL1
+	AM2320_ERROR_LINE	LITERAL1
