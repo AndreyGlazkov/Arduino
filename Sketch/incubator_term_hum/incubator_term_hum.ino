@@ -135,7 +135,7 @@ dataEgg eggs[] = {
   
   PROGMEM const char rts_not_run[]    = "ЧАСЫ НЕ ВЫСТАВЛЕНЫ";
 
-  PROGMEM const char err_term[]       = "ОШИБКА ТЕМТЕРАТУРЫ"
+  PROGMEM const char err_term[]       = "ОШИБКА ТЕМПЕРАТУРЫ";
 
   PGM_P arrStr[] = {
       st_chick, st_duck, st_goose
