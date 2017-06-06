@@ -57,12 +57,12 @@ boolean openParam = false;
 int countItems;             // количество строк в меню
 char * bufTitle;            // переменная хранит зоголовок
 float term = 0.0;           // температура
-float term2 = 0.0;          // температура
+float term2 = 0.0;          // температура с второго датчика
 float humid = 0.0;          // влажность
 dataEgg * curDataEgg;       // указатель на текущеи параметры яиц
-boolean bl_head = false;    // включен нвгреватель
+boolean error = false;      // есть ошибка
+char * msg_err;             // текст ошибки   
 boolean bl_cooler = false;  // включен вентелятор
-boolean bl_water = false;   // включен увлажнитель
 boolean bl_rotate = false;  // переворот лотка
 boolean err_ds18b20 = false;// ошибак подключения ds18b20
 uint8_t curDay;
@@ -134,6 +134,8 @@ dataEgg eggs[] = {
   PROGMEM const char st_exit[]        = "ВЫХОД";
   
   PROGMEM const char rts_not_run[]    = "ЧАСЫ НЕ ВЫСТАВЛЕНЫ";
+
+  PROGMEM const char err_term[]       = "ОШИБКА ТЕМТЕРАТУРЫ"
 
   PGM_P arrStr[] = {
       st_chick, st_duck, st_goose
@@ -309,10 +311,22 @@ dataEgg eggs[] = {
       u8g.setPrintPos(80, 64);
       u8g.println(humid, 0);
       
-      if (bl_head == HIGH) { u8g.drawBitmapP( 80, 5, 1, 7, heater); }                               // изобразить нагрев
-      if (bl_water == HIGH) { u8g.drawBitmapP( 95, 5, 1, 7, water); }                               // изобразить увлажнителя
-      if (bl_rotate == HIGH) { u8g.drawBitmapP( 110, 5, 1, 8, rotate_l); }                          // изобразить повората лотка
-        else { u8g.drawBitmapP( 110, 5, 1, 8, rotate_r); }                                       
+      // изобразить нагрев
+      if (digitalRead(PIN_HEAT) == HIGH) {
+        u8g.drawBitmapP( 80, 5, 1, 7, heater); 
+        }
+        
+      // изобразить увлажнителя  
+      if (digitalRead(PIN_WATER) == HIGH) {
+        u8g.drawBitmapP( 95, 5, 1, 7, water); 
+        }
+        
+      // изобразить повората лотка
+      if (digitalRead(PIN_ROTATE) == HIGH) {
+        u8g.drawBitmapP( 110, 5, 1, 8, rotate_l); 
+        } else {
+          u8g.drawBitmapP( 110, 5, 1, 8, rotate_r); 
+          }                                       
   }
 
   void drawMenu(int posCursor) {
@@ -354,6 +368,11 @@ dataEgg eggs[] = {
       default:
         break;        
       }
+    }
+
+  void drawErr() {
+    u8g.setFont(rus6x10);
+    u8g.drawStr(1, 36, getStrFromPROGMEM(msg_err));
     }
 
   // редактор даты
@@ -538,7 +557,6 @@ void setup() {
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
   if (!openMenu){
       getTerm();
       getHum();
@@ -556,7 +574,11 @@ void loop() {
   u8g.firstPage();  
   do {
     if (!openMenu) {
-      drawInfo();
+       if (error) {
+        drawErr();
+        } else {
+          drawInfo();
+          }
     } else {
       if (openParam) {
           drawParam(curMenu);
@@ -576,19 +598,27 @@ void loop() {
 
   // контроль температуры
   void cntrHead() {
+    if (term < term2-10 || term > term2+10) {
+      error = true;
+      msg_err = err_term;
+      return;
+      } else {
+        error = false;
+        }
     if (term < curDataEgg->t - 0.1) {
-       bl_head = HIGH;
-      } else if (term > curDataEgg->t) bl_head = LOW;
-    digitalWrite(PIN_HEAT, bl_head);
+      digitalWrite(PIN_HEAT, HIGH);
+      } else if (term > curDataEgg->t){
+        digitalWrite(PIN_HEAT, LOW);
+        }
   }
 
   // контроль влажности
   void cntrWater() {
     if (humid < curDataEgg->h - 5) {
-       bl_water = HIGH;
-      } else if (humid > curDataEgg->t) bl_water = LOW;
-    digitalWrite(PIN_WATER, bl_water);
-    
+       digitalWrite(PIN_WATER, HIGH);
+      } else if (humid > curDataEgg->h) {
+        digitalWrite(PIN_WATER, LOW);
+      }
     }
 
   // контроль переворота лотков
@@ -603,10 +633,11 @@ void loop() {
     elem.Day    = t.date;
     elem.Month  = t.mon;
     elem.Year   = t.yr;
+    
     // перевести текущее время в формат time_t
     time_t t_now = makeTime(elem);
     
-    if (lastRotate < (t_now - curDataEgg->rotate*60*60) ) {
+    if (lastRotate > (t_now - curDataEgg->rotate*60*60) ) {
        lastRotate = t_now;
        bl_rotate = !bl_rotate;
        digitalWrite(PIN_ROTATE, bl_rotate);
